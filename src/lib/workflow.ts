@@ -243,6 +243,41 @@ export function canAccess(roles: AppRole[], area: Area) {
   return roles.some((r) => AREA_ROLES[area].includes(r));
 }
 
+/** Staff registration approval (mirrors profiles.approval_status and the profile_before trigger). */
+export type ApprovalStatus = "pending_approval" | "approved" | "rejected";
+export const APPROVAL_LABELS: Record<ApprovalStatus, string> = {
+  pending_approval: "Awaiting approval",
+  approved: "Approved",
+  rejected: "Not approved",
+};
+
+/** Why a signed-in account may or may not use the system. */
+export type AccountState = "ok" | "pending" | "rejected" | "disabled" | "no_role";
+export function accountState(a: { approvalStatus: ApprovalStatus; active: boolean; roles: AppRole[] }): AccountState {
+  if (a.approvalStatus === "pending_approval") return "pending";
+  if (a.approvalStatus === "rejected") return "rejected";
+  if (!a.active) return "disabled";
+  if (a.roles.length === 0) return "no_role";
+  return "ok";
+}
+
+export const ACCOUNT_STATE_MESSAGES: Record<Exclude<AccountState, "ok">, { title: string; text: string }> = {
+  pending: { title: "Account awaiting approval", text: "Your registration was received. The clinic administrator must approve it and assign your role before you can use the system." },
+  rejected: { title: "Registration not approved", text: "The administrator did not approve this registration. Contact the clinic administrator if you think this is a mistake." },
+  disabled: { title: "Account deactivated", text: "Your account has been deactivated. Contact the clinic administrator." },
+  no_role: { title: "No role assigned yet", text: "Your account is approved but has no role. Ask the administrator to assign one." },
+};
+
+/** Department home a staff member lands on after signing in: one department role → that department; admin or several roles → main dashboard. */
+export function homeFor(roles: AppRole[]): "/dashboard" | "/reception" | "/opd" | "/lab" {
+  if (roles.includes("admin") || roles.length !== 1) return "/dashboard";
+  const only = roles[0];
+  if (only === "receptionist") return "/reception";
+  if (only === "clinician") return "/opd";
+  if (only === "lab_tech") return "/lab";
+  return "/dashboard";
+}
+
 export function ageFromDob(dob: string | null, now = new Date(), estimated = false): string | null {
   if (!dob) return null;
   if (estimated) return `~${ageFromDob(dob, now)}`;
