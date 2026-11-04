@@ -1304,30 +1304,54 @@ export type Database = {
       profiles: {
         Row: {
           active: boolean
+          approval_status: string
+          approved_at: string | null
+          approved_by: string | null
           can_self_verify: boolean
           can_verify_lab: boolean
           created_at: string
+          email: string | null
           full_name: string
           id: string
           phone: string | null
+          rejected_at: string | null
+          rejected_by: string | null
+          rejection_reason: string | null
+          staff_number: string | null
         }
         Insert: {
           active?: boolean
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           can_self_verify?: boolean
           can_verify_lab?: boolean
           created_at?: string
+          email?: string | null
           full_name?: string
           id: string
           phone?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
+          staff_number?: string | null
         }
         Update: {
           active?: boolean
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           can_self_verify?: boolean
           can_verify_lab?: boolean
           created_at?: string
+          email?: string | null
           full_name?: string
           id?: string
           phone?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
+          staff_number?: string | null
         }
         Relationships: []
       }
@@ -1596,7 +1620,16 @@ export type Database = {
         Args: { _item_id: string; _reason: string }
         Returns: undefined
       }
+      approve_staff_registration: {
+        Args: {
+          _can_verify_lab?: boolean
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: undefined
+      }
       billing_enabled: { Args: never; Returns: boolean }
+      bootstrap_first_admin: { Args: { _user_id: string }; Returns: undefined }
       can_verify_lab: { Args: { _user_id: string }; Returns: boolean }
       clinic_date: { Args: { _ts: string }; Returns: string }
       clinic_today: { Args: never; Returns: string }
@@ -1659,6 +1692,10 @@ export type Database = {
       }
       reject_specimen: {
         Args: { _condition?: string; _reason: string; _specimen_id: string }
+        Returns: undefined
+      }
+      reject_staff_registration: {
+        Args: { _reason: string; _user_id: string }
         Returns: undefined
       }
       report_admin_summary: { Args: { _day?: string }; Returns: Json }
