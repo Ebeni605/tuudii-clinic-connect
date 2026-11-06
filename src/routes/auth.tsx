@@ -1,4 +1,3 @@
-import { useQueryClient } from "@tanstack/react-query";
 import { staffQuery } from "@/lib/auth";
 import { homeFor } from "@/lib/workflow";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -34,7 +33,6 @@ function AuthPage() {
     const me = await qc.fetchQuery(staffQuery);
     navigate({ to: me && me.state === "ok" ? homeFor(me.roles) : "/no-access", replace: true });
   };
-  const qc = useQueryClient();
   const [needsSetup, setNeedsSetup] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
