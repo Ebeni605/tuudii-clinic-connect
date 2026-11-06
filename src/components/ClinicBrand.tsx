@@ -1,4 +1,4 @@
-import logo from "@/assets/clinic-logo.png.asset.json";
+const logo = { url: "/clinic-logo.png" };
 
 export const CLINIC = {
   name: "KILINIKA G/GALEESSA TUUDII",
