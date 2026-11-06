@@ -133,7 +133,7 @@ function PendingRequests({ rows, onDone }: { rows: Pending[]; onDone: () => void
       ? await supabase.rpc("approve_staff_registration", { _user_id: act.row.id, _role: role, _can_verify_lab: role === "lab_tech" && verify })
       : await supabase.rpc("reject_staff_registration", { _user_id: act.row.id, _reason: reason.trim() });
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success(act.mode === "approve" ? "Registration approved" : "Registration rejected");
     setAct(null); setReason(""); setVerify(false); onDone();
   }
