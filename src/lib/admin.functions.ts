@@ -100,6 +100,10 @@ export const listStaff = createServerFn({ method: "POST" })
         canVerifyLab: p?.can_verify_lab ?? false,
         roles: (roles ?? []).filter((r) => r.user_id === u.id).map((r) => r.role as AppRole),
         lastSignIn: u.last_sign_in_at ?? null,
+        approvalStatus: (p?.approval_status ?? "pending_approval") as "pending_approval" | "approved" | "rejected",
+        staffNumber: p?.staff_number ?? "",
+        rejectionReason: p?.rejection_reason ?? "",
+        createdAt: p?.created_at ?? u.created_at,
       };
     });
   });
