@@ -1,3 +1,6 @@
+import { useQueryClient } from "@tanstack/react-query";
+import { staffQuery } from "@/lib/auth";
+import { homeFor } from "@/lib/workflow";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -27,6 +30,11 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const goHome = async () => {
+    const me = await qc.fetchQuery(staffQuery);
+    navigate({ to: me && me.state === "ok" ? homeFor(me.roles) : "/no-access", replace: true });
+  };
+  const qc = useQueryClient();
   const [needsSetup, setNeedsSetup] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -36,7 +44,7 @@ function AuthPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/dashboard", replace: true });
+      if (data.session) void goHome();
     });
     supabase.rpc("admin_exists").then(({ data }) => setNeedsSetup(data === false));
   }, [navigate]);
@@ -48,7 +56,7 @@ function AuthPage() {
     setBusy(false);
     if (error) { toast.error(error.message.includes("Invalid") ? "Wrong email or password" : "Sign in failed. Check your connection and try again."); return; }
     qc.clear();
-    navigate({ to: "/dashboard", replace: true });
+    await goHome();
   }
 
   async function sendReset(e: React.FormEvent) {
@@ -68,7 +76,7 @@ function AuthPage() {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       toast.success("Administrator account created");
-      navigate({ to: "/dashboard", replace: true });
+      await goHome();
     } catch (err) {
       toast.error((err as Error).message);
     } finally {
