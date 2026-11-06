@@ -14,7 +14,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { PageHeader, RequireArea } from "@/components/AppShell";
 import { requireArea } from "@/lib/auth";
 import { createStaff, listStaff, updateStaff } from "@/lib/admin.functions";
-import { ROLE_LABELS, type AppRole } from "@/lib/workflow";
+import { ROLE_LABELS, APPROVAL_LABELS, type AppRole } from "@/lib/workflow";
+import { supabase } from "@/integrations/supabase/client";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/admin/staff")({
   beforeLoad: requireArea("admin"),
@@ -80,6 +83,7 @@ function Staff() {
             </DialogContent>
           </Dialog>
         } />
+      <PendingRequests rows={(data ?? []).filter((s) => s.approvalStatus === "pending_approval")} onDone={() => refetch()} />
       <Card>
         <Table>
           <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Email</TableHead><TableHead>Roles</TableHead><TableHead>Status</TableHead><TableHead>Last sign in</TableHead><TableHead /></TableRow></TableHeader>
@@ -89,7 +93,7 @@ function Staff() {
                 <TableCell className="font-medium">{s.fullName}</TableCell>
                 <TableCell>{s.email}</TableCell>
                 <TableCell className="text-sm">{s.roles.map((r) => ROLE_LABELS[r]).join(", ") || "—"}{s.canVerifyLab && <div className="text-xs text-muted-foreground">May verify lab results</div>}{s.canSelfVerify && <div className="text-xs text-muted-foreground">May self-verify lab results</div>}</TableCell>
-                <TableCell>{s.active ? "Active" : <span className="text-destructive">Disabled</span>}</TableCell>
+                <TableCell>{s.approvalStatus !== "approved" ? APPROVAL_LABELS[s.approvalStatus] : s.active ? "Active" : <span className="text-destructive">Disabled</span>}</TableCell>
                 <TableCell className="text-sm">{s.lastSignIn ? new Date(s.lastSignIn).toLocaleString() : "Never"}</TableCell>
                 <TableCell><Button size="sm" variant="outline" onClick={() => setEdit({ userId: s.id, name: s.fullName, roles: s.roles, active: s.active, canSelfVerify: s.canSelfVerify, canVerifyLab: s.canVerifyLab, newPassword: "" })}>Edit</Button></TableCell>
               </TableRow>
@@ -111,5 +115,65 @@ function Staff() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+type Pending = { id: string; fullName: string; email: string; phone: string; staffNumber: string; createdAt: string };
+
+function PendingRequests({ rows, onDone }: { rows: Pending[]; onDone: () => void }) {
+  const [act, setAct] = useState<{ row: Pending; mode: "approve" | "reject" } | null>(null);
+  const [role, setRole] = useState<AppRole>("receptionist");
+  const [verify, setVerify] = useState(false);
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+  async function submit() {
+    if (!act) return;
+    setBusy(true);
+    const { error } = act.mode === "approve"
+      ? await supabase.rpc("approve_staff_registration", { _user_id: act.row.id, _role: role, _can_verify_lab: role === "lab_tech" && verify })
+      : await supabase.rpc("reject_staff_registration", { _user_id: act.row.id, _reason: reason.trim() });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success(act.mode === "approve" ? "Registration approved" : "Registration rejected");
+    setAct(null); setReason(""); setVerify(false); onDone();
+  }
+  return (
+    <Card className="mb-4 p-4">
+      <h2 className="font-semibold">Registration requests ({rows.length})</h2>
+      {rows.length === 0 ? <p className="mt-1 text-sm text-muted-foreground">No staff are waiting for approval.</p> : (
+        <Table>
+          <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Email</TableHead><TableHead>Phone / Staff ID</TableHead><TableHead>Registered</TableHead><TableHead /></TableRow></TableHeader>
+          <TableBody>{rows.map((r) => (
+            <TableRow key={r.id}>
+              <TableCell className="font-medium">{r.fullName || "—"}</TableCell>
+              <TableCell>{r.email}</TableCell>
+              <TableCell className="text-sm">{r.phone || "—"}{r.staffNumber && <div className="text-xs text-muted-foreground">{r.staffNumber}</div>}</TableCell>
+              <TableCell className="text-sm">{new Date(r.createdAt).toLocaleString()}</TableCell>
+              <TableCell className="space-x-2 whitespace-nowrap">
+                <Button size="sm" onClick={() => setAct({ row: r, mode: "approve" })}>Approve</Button>
+                <Button size="sm" variant="outline" onClick={() => setAct({ row: r, mode: "reject" })}>Reject</Button>
+              </TableCell>
+            </TableRow>))}
+          </TableBody>
+        </Table>)}
+      <Dialog open={!!act} onOpenChange={(o) => !o && setAct(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{act?.mode === "approve" ? "Approve" : "Reject"} {act?.row.fullName}</DialogTitle></DialogHeader>
+          {act?.mode === "approve" ? (
+            <div className="space-y-3">
+              <Label>Department role</Label>
+              <Select value={role} onValueChange={(v) => setRole(v as AppRole)}>
+                <SelectTrigger aria-label="Department role"><SelectValue /></SelectTrigger>
+                <SelectContent>{ALL.map((r) => <SelectItem key={r} value={r}>{ROLE_LABELS[r]}</SelectItem>)}</SelectContent>
+              </Select>
+              {role === "lab_tech" && <label className="flex items-center gap-2 text-sm"><Switch checked={verify} onCheckedChange={setVerify} />May verify laboratory results</label>}
+            </div>
+          ) : (
+            <div className="space-y-1.5"><Label htmlFor="rej">Reason (required)</Label><Textarea id="rej" value={reason} onChange={(e) => setReason(e.target.value)} /></div>
+          )}
+          <Button className="w-full" disabled={busy || (act?.mode === "reject" && reason.trim().length < 3)} onClick={submit}>{busy ? "Saving…" : "Confirm"}</Button>
+        </DialogContent>
+      </Dialog>
+    </Card>
   );
 }
