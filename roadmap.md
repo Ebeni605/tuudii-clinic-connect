@@ -14,6 +14,9 @@
 - [x] Final implementation report
 - [ ] Not verified: backup restore in a separate environment, real concurrent-order test, billing browser flow with billing switched on, email reset delivery to a real inbox
 
+## Staff registration & approval (done)
+- [ ] Needs a real inbox: register → confirm email → admin approves → log in
+
 ## Later / needs the clinic
 - Clinic to enter validated units/reference intervals; confirm meaning of B/F and BF
 - Clinic to approve prices + payment workflow before billing is switched on
