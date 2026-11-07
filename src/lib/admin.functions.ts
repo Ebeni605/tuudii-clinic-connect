@@ -154,3 +154,104 @@ export const updateStaff = createServerFn({ method: "POST" })
     }
     return { ok: true };
   });
+
+/** Reviewable list of every patient record and staff account, for the pre-go-live test-data cleanup. */
+export const listSyntheticData = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const [{ data: patients }, { data: users }, { data: profiles }, { data: roles }] = await Promise.all([
+      supabaseAdmin.from("patients").select("id, mrn, first_name, middle_name, last_name, created_at").order("created_at"),
+      supabaseAdmin.auth.admin.listUsers({ perPage: 500 }),
+      supabaseAdmin.from("profiles").select("id, full_name"),
+      supabaseAdmin.from("user_roles").select("user_id, role"),
+    ]);
+    return {
+      patients: (patients ?? []).map((p) => ({
+        id: p.id,
+        mrn: p.mrn,
+        name: [p.first_name, p.middle_name, p.last_name].filter(Boolean).join(" "),
+        createdAt: p.created_at,
+      })),
+      users: (users?.users ?? []).map((u) => ({
+        id: u.id,
+        email: u.email ?? "",
+        fullName: profiles?.find((p) => p.id === u.id)?.full_name ?? "",
+        roles: (roles ?? []).filter((r) => r.user_id === u.id).map((r) => r.role as AppRole),
+        isYou: u.id === context.userId,
+        createdAt: u.created_at,
+      })),
+    };
+  });
+
+const cleanupInput = z.object({
+  patientIds: z.array(z.string().uuid()).max(1000),
+  userIds: z.array(z.string().uuid()).max(200),
+  confirm: z.literal("DELETE TEST DATA"),
+});
+
+/**
+ * Removes the administrator-approved test patients (with every dependent clinical,
+ * laboratory and billing record, in safe relational order) and test staff accounts.
+ * The calling administrator can never be removed. Every step is recorded in the audit log.
+ */
+export const cleanupSyntheticData = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => parse(cleanupInput, d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    if (data.userIds.includes(context.userId)) throw new Error("You cannot remove your own account");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const del = async (table: string, column: string, ids: string[]) => {
+      if (!ids.length) return;
+      const { error } = await supabaseAdmin.from(table).delete().in(column, ids);
+      if (error) throw new Error(`Cleanup failed at ${table}: ${error.message}`);
+    };
+
+    const pids = data.patientIds;
+    if (pids.length) {
+      const { data: reqs } = await supabaseAdmin.from("lab_requests").select("id").in("patient_id", pids);
+      const reqIds = (reqs ?? []).map((r) => r.id);
+      const { data: items } = reqIds.length
+        ? await supabaseAdmin.from("lab_request_items").select("id").in("lab_request_id", reqIds)
+        : { data: [] };
+      const itemIds = (items ?? []).map((i) => i.id);
+      const { data: invs } = await supabaseAdmin.from("invoices").select("id").in("patient_id", pids);
+      const invIds = (invs ?? []).map((i) => i.id);
+
+      await del("lab_results", "item_id", itemIds);
+      await del("lab_result_amendments", "item_id", itemIds);
+      await del("lab_specimen_tests", "item_id", itemIds);
+      await del("lab_request_items", "lab_request_id", reqIds);
+      await del("lab_specimens", "lab_request_id", reqIds);
+      await del("lab_requests", "patient_id", pids);
+      await del("consultation_amendments", "patient_id", pids);
+      await del("medication_instructions", "patient_id", pids);
+      await del("diagnoses", "patient_id", pids);
+      await del("consultations", "patient_id", pids);
+      await del("vital_signs", "patient_id", pids);
+      await del("billing_adjustments", "invoice_id", invIds);
+      await del("payments", "invoice_id", invIds);
+      await del("invoice_items", "invoice_id", invIds);
+      await del("invoices", "patient_id", pids);
+      await del("visits", "patient_id", pids);
+      await del("appointments", "patient_id", pids);
+      await del("patients", "id", pids);
+    }
+
+    for (const uid of data.userIds) {
+      await del("user_roles", "user_id", [uid]);
+      await del("profiles", "id", [uid]);
+      const { error } = await supabaseAdmin.auth.admin.deleteUser(uid);
+      if (error) throw new Error(`Could not remove account: ${error.message}`);
+      await auditAccountEvent(context.userId, uid, "TEST_ACCOUNT_REMOVED", {});
+    }
+
+    await auditAccountEvent(context.userId, context.userId, "TEST_DATA_CLEANUP", {
+      patientsRemoved: pids.length,
+      accountsRemoved: data.userIds.length,
+    });
+    return { ok: true, patientsRemoved: pids.length, accountsRemoved: data.userIds.length };
+  });
