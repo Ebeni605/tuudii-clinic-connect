@@ -78,6 +78,13 @@
       "when": 1793822557928,
       "tag": "0010_staff_self_registration_approval",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1794040907004,
+      "tag": "0011_predeployment_lab_price_readiness",
+      "breakpoints": true
     }
   ]
 }

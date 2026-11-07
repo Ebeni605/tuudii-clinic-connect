@@ -17,6 +17,12 @@
 ## Staff registration & approval (done)
 - [ ] Needs a real inbox: register → confirm email → admin approves → log in
 
+## Pre-deployment requirements (in progress)
+- [ ] 1. Lab test definitions: units/ranges/method/analyzer/critical limits, age/sex/pregnancy ranges, approval workflow, B/F + BF locked until confirmed
+- [ ] 2. Price list: per-charge approval, effective/expiry dates, price history, price-list confirmation gate before billing can run
+- [ ] 3. Backup/restore record, synthetic-data cleanup tool (admin-approved), 10-gate deployment readiness checklist
+- [ ] Tests + typecheck + final report
+
 ## Later / needs the clinic
 - Clinic to enter validated units/reference intervals; confirm meaning of B/F and BF
 - Clinic to approve prices + payment workflow before billing is switched on
