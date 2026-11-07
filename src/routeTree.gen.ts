@@ -19,6 +19,7 @@ import { Route as AuthenticatedNoAccessRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedAdminAuditRouteImport } from './routes/_authenticated/admin.audit'
 import { Route as AuthenticatedAdminBillingRouteImport } from './routes/_authenticated/admin.billing'
+import { Route as AuthenticatedAdminDeploymentRouteImport } from './routes/_authenticated/admin.deployment'
 import { Route as AuthenticatedAdminDiagnosesRouteImport } from './routes/_authenticated/admin.diagnoses'
 import { Route as AuthenticatedAdminReportsRouteImport } from './routes/_authenticated/admin.reports'
 import { Route as AuthenticatedAdminServicesRouteImport } from './routes/_authenticated/admin.services'
@@ -88,6 +89,12 @@ const AuthenticatedAdminBillingRoute =
   AuthenticatedAdminBillingRouteImport.update({
     id: '/admin/billing',
     path: '/admin/billing',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminDeploymentRoute =
+  AuthenticatedAdminDeploymentRouteImport.update({
+    id: '/admin/deployment',
+    path: '/admin/deployment',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAdminDiagnosesRoute =
@@ -216,6 +223,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof AuthenticatedProfileRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/billing': typeof AuthenticatedAdminBillingRoute
+  '/admin/deployment': typeof AuthenticatedAdminDeploymentRoute
   '/admin/diagnoses': typeof AuthenticatedAdminDiagnosesRoute
   '/admin/reports': typeof AuthenticatedAdminReportsRoute
   '/admin/services': typeof AuthenticatedAdminServicesRoute
@@ -247,6 +255,7 @@ export interface FileRoutesByTo {
   '/profile': typeof AuthenticatedProfileRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/billing': typeof AuthenticatedAdminBillingRoute
+  '/admin/deployment': typeof AuthenticatedAdminDeploymentRoute
   '/admin/diagnoses': typeof AuthenticatedAdminDiagnosesRoute
   '/admin/reports': typeof AuthenticatedAdminReportsRoute
   '/admin/services': typeof AuthenticatedAdminServicesRoute
@@ -280,6 +289,7 @@ export interface FileRoutesById {
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/_authenticated/admin/billing': typeof AuthenticatedAdminBillingRoute
+  '/_authenticated/admin/deployment': typeof AuthenticatedAdminDeploymentRoute
   '/_authenticated/admin/diagnoses': typeof AuthenticatedAdminDiagnosesRoute
   '/_authenticated/admin/reports': typeof AuthenticatedAdminReportsRoute
   '/_authenticated/admin/services': typeof AuthenticatedAdminServicesRoute
@@ -313,6 +323,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/admin/audit'
     | '/admin/billing'
+    | '/admin/deployment'
     | '/admin/diagnoses'
     | '/admin/reports'
     | '/admin/services'
@@ -344,6 +355,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/admin/audit'
     | '/admin/billing'
+    | '/admin/deployment'
     | '/admin/diagnoses'
     | '/admin/reports'
     | '/admin/services'
@@ -376,6 +388,7 @@ export interface FileRouteTypes {
     | '/_authenticated/profile'
     | '/_authenticated/admin/audit'
     | '/_authenticated/admin/billing'
+    | '/_authenticated/admin/deployment'
     | '/_authenticated/admin/diagnoses'
     | '/_authenticated/admin/reports'
     | '/_authenticated/admin/services'
@@ -476,6 +489,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/billing'
       fullPath: '/admin/billing'
       preLoaderRoute: typeof AuthenticatedAdminBillingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/deployment': {
+      id: '/_authenticated/admin/deployment'
+      path: '/admin/deployment'
+      fullPath: '/admin/deployment'
+      preLoaderRoute: typeof AuthenticatedAdminDeploymentRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin/diagnoses': {
@@ -627,6 +647,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedAdminAuditRoute: typeof AuthenticatedAdminAuditRoute
   AuthenticatedAdminBillingRoute: typeof AuthenticatedAdminBillingRoute
+  AuthenticatedAdminDeploymentRoute: typeof AuthenticatedAdminDeploymentRoute
   AuthenticatedAdminDiagnosesRoute: typeof AuthenticatedAdminDiagnosesRoute
   AuthenticatedAdminReportsRoute: typeof AuthenticatedAdminReportsRoute
   AuthenticatedAdminServicesRoute: typeof AuthenticatedAdminServicesRoute
@@ -655,6 +676,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedAdminAuditRoute: AuthenticatedAdminAuditRoute,
   AuthenticatedAdminBillingRoute: AuthenticatedAdminBillingRoute,
+  AuthenticatedAdminDeploymentRoute: AuthenticatedAdminDeploymentRoute,
   AuthenticatedAdminDiagnosesRoute: AuthenticatedAdminDiagnosesRoute,
   AuthenticatedAdminReportsRoute: AuthenticatedAdminReportsRoute,
   AuthenticatedAdminServicesRoute: AuthenticatedAdminServicesRoute,

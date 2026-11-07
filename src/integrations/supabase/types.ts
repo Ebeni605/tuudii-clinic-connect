@@ -172,6 +172,9 @@ export type Database = {
           currency: string
           enabled: boolean
           id: number
+          price_list_approved: boolean
+          price_list_approved_at: string | null
+          price_list_approved_by: string | null
           updated_at: string
           updated_by: string | null
         }
@@ -180,6 +183,9 @@ export type Database = {
           currency?: string
           enabled?: boolean
           id?: number
+          price_list_approved?: boolean
+          price_list_approved_at?: string | null
+          price_list_approved_by?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -188,6 +194,9 @@ export type Database = {
           currency?: string
           enabled?: boolean
           id?: number
+          price_list_approved?: boolean
+          price_list_approved_at?: string | null
+          price_list_approved_by?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -356,6 +365,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      deployment_checklist: {
+        Row: {
+          done: boolean
+          done_at: string | null
+          done_by: string | null
+          gate_key: string
+          note: string | null
+        }
+        Insert: {
+          done?: boolean
+          done_at?: string | null
+          done_by?: string | null
+          gate_key: string
+          note?: string | null
+        }
+        Update: {
+          done?: boolean
+          done_at?: string | null
+          done_by?: string | null
+          gate_key?: string
+          note?: string | null
+        }
+        Relationships: []
       }
       diagnoses: {
         Row: {
@@ -1021,14 +1054,77 @@ export type Database = {
           },
         ]
       }
+      lab_test_reference_ranges: {
+        Row: {
+          age_max_years: number | null
+          age_min_years: number | null
+          created_at: string
+          created_by: string | null
+          id: string
+          lab_test_id: string
+          note: string | null
+          pregnancy: boolean
+          ref_high: number | null
+          ref_low: number | null
+          ref_text: string | null
+          sex: string | null
+          unit: string | null
+        }
+        Insert: {
+          age_max_years?: number | null
+          age_min_years?: number | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          lab_test_id: string
+          note?: string | null
+          pregnancy?: boolean
+          ref_high?: number | null
+          ref_low?: number | null
+          ref_text?: string | null
+          sex?: string | null
+          unit?: string | null
+        }
+        Update: {
+          age_max_years?: number | null
+          age_min_years?: number | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          lab_test_id?: string
+          note?: string | null
+          pregnancy?: boolean
+          ref_high?: number | null
+          ref_low?: number | null
+          ref_text?: string | null
+          sex?: string | null
+          unit?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lab_test_reference_ranges_lab_test_id_fkey"
+            columns: ["lab_test_id"]
+            isOneToOne: false
+            referencedRelation: "lab_tests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lab_tests: {
         Row: {
           abnormal_options: string[] | null
           active: boolean
+          analyzer: string | null
+          approval_status: string
+          approved_at: string | null
+          approved_by: string | null
           catalogue_note: string | null
           code: string
+          critical_high: number | null
+          critical_low: number | null
           display_order: number
           id: string
+          method: string | null
           name: string
           panel: string | null
           ref_high: number | null
@@ -1046,10 +1142,17 @@ export type Database = {
         Insert: {
           abnormal_options?: string[] | null
           active?: boolean
+          analyzer?: string | null
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           catalogue_note?: string | null
           code: string
+          critical_high?: number | null
+          critical_low?: number | null
           display_order?: number
           id?: string
+          method?: string | null
           name: string
           panel?: string | null
           ref_high?: number | null
@@ -1067,10 +1170,17 @@ export type Database = {
         Update: {
           abnormal_options?: string[] | null
           active?: boolean
+          analyzer?: string | null
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           catalogue_note?: string | null
           code?: string
+          critical_high?: number | null
+          critical_low?: number | null
           display_order?: number
           id?: string
+          method?: string | null
           name?: string
           panel?: string | null
           ref_high?: number | null
@@ -1301,6 +1411,41 @@ export type Database = {
           },
         ]
       }
+      price_history: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          charge_id: string
+          id: number
+          new_price: number
+          old_price: number | null
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          charge_id: string
+          id?: never
+          new_price: number
+          old_price?: number | null
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          charge_id?: string
+          id?: never
+          new_price?: number
+          old_price?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "price_history_charge_id_fkey"
+            columns: ["charge_id"]
+            isOneToOne: false
+            referencedRelation: "service_charges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           active: boolean
@@ -1379,9 +1524,16 @@ export type Database = {
       service_charges: {
         Row: {
           active: boolean
+          approval_status: string
+          approved_at: string | null
+          approved_by: string | null
           category: string
           created_at: string
+          currency: string
+          description: string | null
           display_order: number
+          effective_date: string | null
+          expiry_date: string | null
           id: string
           lab_test_id: string | null
           name: string
@@ -1392,9 +1544,16 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           category: string
           created_at?: string
+          currency?: string
+          description?: string | null
           display_order?: number
+          effective_date?: string | null
+          expiry_date?: string | null
           id?: string
           lab_test_id?: string | null
           name: string
@@ -1405,9 +1564,16 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           category?: string
           created_at?: string
+          currency?: string
+          description?: string | null
           display_order?: number
+          effective_date?: string | null
+          expiry_date?: string | null
           id?: string
           lab_test_id?: string | null
           name?: string
@@ -1620,6 +1786,9 @@ export type Database = {
         Args: { _item_id: string; _reason: string }
         Returns: undefined
       }
+      approve_charge: { Args: { _charge_id: string }; Returns: undefined }
+      approve_lab_test: { Args: { _test_id: string }; Returns: undefined }
+      approve_price_list: { Args: { _note: string }; Returns: undefined }
       approve_staff_registration: {
         Args: {
           _can_verify_lab?: boolean
