@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -28,8 +28,10 @@ type Form = {
   id?: string; code: string; name: string; section: string; panel: string; specimen_type: string; result_type: string;
   unit: string; ref_low: string; ref_high: string; ref_text: string; result_options: string; abnormal_options: string;
   reference_source: string; catalogue_note: string; display_order: string; active: boolean;
+  method: string; analyzer: string; critical_low: string; critical_high: string;
 };
-const EMPTY: Form = { code: "", name: "", section: "Hematology", panel: "", specimen_type: "", result_type: "numeric", unit: "", ref_low: "", ref_high: "", ref_text: "", result_options: "", abnormal_options: "", reference_source: "", catalogue_note: "", display_order: "0", active: true };
+const EMPTY: Form = { code: "", name: "", section: "Hematology", panel: "", specimen_type: "", result_type: "numeric", unit: "", ref_low: "", ref_high: "", ref_text: "", result_options: "", abnormal_options: "", reference_source: "", catalogue_note: "", display_order: "0", active: true, method: "", analyzer: "", critical_low: "", critical_high: "" };
+const APPROVAL_LABEL: Record<string, string> = { draft: "Needs approval", approved: "Approved", needs_confirmation: "Needs lab confirmation" };
 const list = (s: string) => { const a = s.split(",").map((x) => x.trim()).filter(Boolean); return a.length ? a : null; };
 const num = (s: string) => (s.trim() === "" ? null : Number(s));
 const str = (s: string) => s.trim() || null;
@@ -49,6 +51,7 @@ function Tests() {
       code: f.code, name: f.name, section: f.section, panel: str(f.panel), specimen_type: str(f.specimen_type), result_type: f.result_type,
       unit: str(f.unit), ref_low: lo, ref_high: hi, ref_text: str(f.ref_text), result_options: list(f.result_options), abnormal_options: list(f.abnormal_options),
       reference_source: str(f.reference_source), catalogue_note: str(f.catalogue_note), display_order: Number(f.display_order) || 0, active: f.active,
+      method: str(f.method), analyzer: str(f.analyzer), critical_low: num(f.critical_low), critical_high: num(f.critical_high),
     };
     setBusy(true);
     const { error } = f.id ? await supabase.from("lab_tests").update(row).eq("id", f.id) : await supabase.from("lab_tests").insert(row);
@@ -62,6 +65,13 @@ function Tests() {
   async function toggle(id: string, active: boolean) {
     const { error } = await supabase.from("lab_tests").update({ active }).eq("id", id);
     if (error) { toast.error(error.message); return; }
+    qc.invalidateQueries({ queryKey: ["lab_tests"] });
+  }
+
+  async function approve(id: string) {
+    const { error } = await supabase.rpc("approve_lab_test", { _test_id: id });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Test approved — it can now be ordered");
     qc.invalidateQueries({ queryKey: ["lab_tests"] });
   }
 
@@ -83,7 +93,7 @@ function Tests() {
             <Table>
               <TableHeader><TableRow>
                 <TableHead>Category</TableHead><TableHead>Test</TableHead><TableHead>Result type</TableHead><TableHead>Unit</TableHead>
-                <TableHead>Reference / answers</TableHead><TableHead>Specimen</TableHead><TableHead>Active</TableHead><TableHead />
+                <TableHead>Reference / answers</TableHead><TableHead>Specimen</TableHead><TableHead>Approval</TableHead><TableHead>Active</TableHead><TableHead />
               </TableRow></TableHeader>
               <TableBody>
                 {LAB_SECTIONS.flatMap((s) => (data ?? []).filter((t) => t.section === s))
@@ -107,12 +117,18 @@ function Tests() {
                           {t.reference_updated_at && <div className="text-muted-foreground">Set by {names?.[t.reference_updated_by ?? ""] ?? "—"}, {fmtDateTime(t.reference_updated_at)}</div>}
                         </TableCell>
                         <TableCell className="text-xs">{t.specimen_type ?? "—"}</TableCell>
+                        <TableCell className="text-xs">
+                          <div className={t.approval_status === "approved" ? "text-success" : "text-warning-foreground"}>{APPROVAL_LABEL[t.approval_status] ?? t.approval_status}</div>
+                          {t.approved_at && <div className="text-muted-foreground">{names?.[t.approved_by ?? ""] ?? "—"}, {fmtDateTime(t.approved_at)}</div>}
+                          {t.approval_status !== "approved" && <Button size="sm" variant="outline" className="mt-1 h-7" onClick={() => approve(t.id)}>Approve</Button>}
+                        </TableCell>
                         <TableCell><Switch aria-label={`${t.name} active`} checked={t.active} onCheckedChange={(a) => toggle(t.id, a)} /></TableCell>
                         <TableCell><Button size="sm" variant="outline" onClick={() => setF({
                           id: t.id, code: t.code, name: t.name, section: t.section, panel: t.panel ?? "", specimen_type: t.specimen_type ?? "", result_type: t.result_type,
                           unit: t.unit ?? "", ref_low: t.ref_low?.toString() ?? "", ref_high: t.ref_high?.toString() ?? "", ref_text: t.ref_text ?? "",
                           result_options: t.result_options?.join(", ") ?? "", abnormal_options: t.abnormal_options?.join(", ") ?? "",
                           reference_source: t.reference_source ?? "", catalogue_note: t.catalogue_note ?? "", display_order: String(t.display_order), active: t.active,
+                          method: t.method ?? "", analyzer: t.analyzer ?? "", critical_low: t.critical_low?.toString() ?? "", critical_high: t.critical_high?.toString() ?? "",
                         })}>Edit</Button></TableCell>
                       </TableRow>
                     );
@@ -154,6 +170,12 @@ function Tests() {
                   <div className="space-y-1.5"><Label htmlFor="t-hi">Reference high</Label><Input id="t-hi" type="number" step="any" value={f.ref_high} onChange={set("ref_high")} /></div>
                 </div>
               </>}
+              {f.result_type === "numeric" && <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1.5"><Label htmlFor="t-clo">Critical low</Label><Input id="t-clo" type="number" step="any" value={f.critical_low} onChange={set("critical_low")} /></div>
+                <div className="space-y-1.5"><Label htmlFor="t-chi">Critical high</Label><Input id="t-chi" type="number" step="any" value={f.critical_high} onChange={set("critical_high")} /></div>
+              </div>}
+              <div className="space-y-1.5"><Label htmlFor="t-meth">Method</Label><Input id="t-meth" value={f.method} onChange={set("method")} maxLength={120} /></div>
+              <div className="space-y-1.5"><Label htmlFor="t-an">Analyzer / kit</Label><Input id="t-an" value={f.analyzer} onChange={set("analyzer")} maxLength={120} /></div>
               {f.result_type === "qualitative" && <>
                 <div className="space-y-1.5"><Label htmlFor="t-opt">Allowed answers * (comma separated)</Label><Input id="t-opt" value={f.result_options} onChange={set("result_options")} placeholder="Negative, Positive" /></div>
                 <div className="space-y-1.5"><Label htmlFor="t-abn">Answers shown as abnormal</Label><Input id="t-abn" value={f.abnormal_options} onChange={set("abnormal_options")} placeholder="Positive" /></div>
@@ -165,9 +187,67 @@ function Tests() {
               <label className="flex items-center gap-2 self-end text-sm"><Switch checked={f.active} onCheckedChange={(active) => setF({ ...f, active })} />Active (can be requested)</label>
             </div>
           )}
+          {f?.id && f.result_type === "numeric" && <Ranges testId={f.id} />}
+          <p className="text-xs text-muted-foreground">Saving changes to an approved test sends it back for approval before it can be ordered again.</p>
           <DialogFooter><Button variant="outline" onClick={() => setF(null)}>Back</Button><Button onClick={save} disabled={busy}>{busy ? "Saving…" : "Save"}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+function Ranges({ testId }: { testId: string }) {
+  const qc = useQueryClient();
+  const q = useQuery({
+    queryKey: ["lab_ranges", testId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("lab_test_reference_ranges").select("*").eq("lab_test_id", testId).order("created_at");
+      if (error) throw error;
+      return data;
+    },
+  });
+  const [r, setR] = useState({ sex: "any", age_min: "", age_max: "", pregnancy: false, unit: "", lo: "", hi: "", text: "" });
+  async function add() {
+    const lo = num(r.lo), hi = num(r.hi), a = num(r.age_min), b = num(r.age_max);
+    if ([lo, hi, a, b].some((x) => x != null && Number.isNaN(x))) { toast.error("Enter numbers only"); return; }
+    if (lo == null && hi == null && !r.text.trim()) { toast.error("Enter a low/high limit or reference text"); return; }
+    const { error } = await supabase.from("lab_test_reference_ranges").insert({
+      lab_test_id: testId, sex: r.sex === "any" ? null : r.sex, age_min_years: a, age_max_years: b, pregnancy: r.pregnancy,
+      unit: str(r.unit), ref_low: lo, ref_high: hi, ref_text: str(r.text),
+    });
+    if (error) { toast.error(error.message); return; }
+    setR({ ...r, age_min: "", age_max: "", lo: "", hi: "", text: "" });
+    qc.invalidateQueries({ queryKey: ["lab_ranges", testId] }); qc.invalidateQueries({ queryKey: ["lab_tests"] });
+  }
+  async function remove(id: string) {
+    const { error } = await supabase.from("lab_test_reference_ranges").delete().eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    qc.invalidateQueries({ queryKey: ["lab_ranges", testId] }); qc.invalidateQueries({ queryKey: ["lab_tests"] });
+  }
+  return (
+    <div className="space-y-2 rounded-md border bg-secondary/40 p-3">
+      <div className="text-sm font-semibold">Age / sex / pregnancy-specific reference ranges</div>
+      {q.data?.length === 0 && <p className="text-xs text-muted-foreground">None yet — the general interval above is used.</p>}
+      {q.data?.map((x) => (
+        <div key={x.id} className="flex items-center justify-between gap-2 text-xs">
+          <span>{x.sex ?? "Any sex"}, age {x.age_min_years ?? 0}–{x.age_max_years ?? "∞"} y{x.pregnancy ? ", pregnant" : ""}: {x.ref_text ?? `${x.ref_low ?? ""}–${x.ref_high ?? ""}`} {x.unit ?? ""}</span>
+          <Button size="sm" variant="ghost" className="h-6" onClick={() => remove(x.id)}>Remove</Button>
+        </div>
+      ))}
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <Select value={r.sex} onValueChange={(v) => setR({ ...r, sex: v })}>
+          <SelectTrigger aria-label="Sex"><SelectValue /></SelectTrigger>
+          <SelectContent><SelectItem value="any">Any sex</SelectItem><SelectItem value="male">Male</SelectItem><SelectItem value="female">Female</SelectItem></SelectContent>
+        </Select>
+        <Input aria-label="Age from (years)" placeholder="Age from" type="number" value={r.age_min} onChange={(e) => setR({ ...r, age_min: e.target.value })} />
+        <Input aria-label="Age to (years)" placeholder="Age to" type="number" value={r.age_max} onChange={(e) => setR({ ...r, age_max: e.target.value })} />
+        <Input aria-label="Unit" placeholder="Unit" value={r.unit} onChange={(e) => setR({ ...r, unit: e.target.value })} />
+        <Input aria-label="Range low" placeholder="Low" type="number" step="any" value={r.lo} onChange={(e) => setR({ ...r, lo: e.target.value })} />
+        <Input aria-label="Range high" placeholder="High" type="number" step="any" value={r.hi} onChange={(e) => setR({ ...r, hi: e.target.value })} />
+        <Input aria-label="Reference text" placeholder="Or text" value={r.text} onChange={(e) => setR({ ...r, text: e.target.value })} />
+        <label className="flex items-center gap-2 text-xs"><Switch checked={r.pregnancy} onCheckedChange={(v) => setR({ ...r, pregnancy: v })} />Pregnancy</label>
+      </div>
+      <Button size="sm" variant="outline" onClick={add}>Add range</Button>
     </div>
   );
 }
