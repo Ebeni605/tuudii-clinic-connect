@@ -70,8 +70,33 @@ function BillingSetup() {
           <Button onClick={save} disabled={busy}>{busy ? "Saving…" : "Save"}</Button>
         </CardContent>
       </Card>
+      <PriceListApproval approved={!!(settings.data as { price_list_approved?: boolean } | undefined)?.price_list_approved} approvedAt={(settings.data as { price_list_approved_at?: string | null } | undefined)?.price_list_approved_at ?? null} />
       <PriceList currency={settings.data?.currency ?? "ETB"} />
     </div>
+  );
+}
+
+function PriceListApproval({ approved, approvedAt }: { approved: boolean; approvedAt: string | null }) {
+  const qc = useQueryClient();
+  const [note, setNote] = useState("");
+  async function confirm() {
+    const { error } = await supabase.rpc("approve_price_list", { _note: note });
+    if (error) { toast.error(friendlyDbError(error.message)); return; }
+    toast.success("Price list confirmed"); setNote("");
+    qc.invalidateQueries({ queryKey: ["billing_settings"] });
+  }
+  return (
+    <Card className="mt-4">
+      <CardHeader><CardTitle className="text-base">Price list confirmation</CardTitle></CardHeader>
+      <CardContent className="space-y-3">
+        <p className="text-sm">{approved ? <span className="text-success font-semibold">Confirmed{approvedAt && ` on ${fmtDateTime(approvedAt)}`}.</span> : <span className="text-destructive font-semibold">Not confirmed — billing cannot be switched on yet.</span>}</p>
+        <p className="text-xs text-muted-foreground">Approve each price below first. Any price change needs approval again.</p>
+        <div className="flex flex-wrap items-end gap-2">
+          <div className="min-w-64 flex-1 space-y-1.5"><Label htmlFor="plnote">Who approved the list (name and date)</Label><Input id="plnote" value={note} maxLength={300} onChange={(e) => setNote(e.target.value)} /></div>
+          <Button onClick={confirm} disabled={note.trim().length < 5}>Confirm price list</Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -86,16 +111,16 @@ function PriceList({ currency }: { currency: string }) {
       return data;
     },
   });
-  const [n, setN] = useState({ name: "", category: "consultation", service_key: "none", price: "" });
+  const [n, setN] = useState({ name: "", category: "consultation", service_key: "none", price: "", description: "", effective_date: "", expiry_date: "" });
   const [edits, setEdits] = useState<Record<string, string>>({});
   const refresh = () => { qc.invalidateQueries({ queryKey: ["charges"] }); };
 
   async function add() {
     const p = priceProblem(Number(n.price));
     if (!n.name.trim() || n.price === "" || p) { toast.error(p ?? "Enter a name and price"); return; }
-    const { error } = await supabase.from("service_charges").insert({ name: n.name.trim(), category: n.category, service_key: n.service_key === "none" ? null : n.service_key, price: Number(n.price) });
+    const { error } = await supabase.from("service_charges").insert({ name: n.name.trim(), category: n.category, service_key: n.service_key === "none" ? null : n.service_key, price: Number(n.price), description: n.description.trim() || null, effective_date: n.effective_date || null, expiry_date: n.expiry_date || null });
     if (error) { toast.error(friendlyDbError(error.message)); return; }
-    setN({ name: "", category: n.category, service_key: "none", price: "" });
+    setN({ ...n, name: "", service_key: "none", price: "", description: "" });
     toast.success("Charge added"); refresh();
   }
   async function update(id: string, patch: { price?: number; active?: boolean }) {
@@ -104,6 +129,12 @@ function PriceList({ currency }: { currency: string }) {
     if (error) { toast.error(friendlyDbError(error.message)); return; }
     setEdits((e) => { const c = { ...e }; delete c[id]; return c; });
     toast.success("Saved"); refresh();
+  }
+
+  async function approve(id: string) {
+    const { error } = await supabase.rpc("approve_charge", { _charge_id: id });
+    if (error) { toast.error(friendlyDbError(error.message)); return; }
+    toast.success("Price approved"); refresh();
   }
 
   return (
@@ -127,6 +158,9 @@ function PriceList({ currency }: { currency: string }) {
             </Select>
           </div>
           <div className="space-y-1.5"><Label htmlFor="cpr">Price ({currency})</Label><Input id="cpr" type="number" min="0" step="0.01" className="w-32" value={n.price} onChange={(e) => setN({ ...n, price: e.target.value })} /></div>
+          <div className="min-w-48 space-y-1.5"><Label htmlFor="cdesc">Description</Label><Input id="cdesc" maxLength={200} value={n.description} onChange={(e) => setN({ ...n, description: e.target.value })} /></div>
+          <div className="space-y-1.5"><Label htmlFor="ceff">Effective from</Label><Input id="ceff" type="date" value={n.effective_date} onChange={(e) => setN({ ...n, effective_date: e.target.value })} /></div>
+          <div className="space-y-1.5"><Label htmlFor="cexp">Expires</Label><Input id="cexp" type="date" value={n.expiry_date} onChange={(e) => setN({ ...n, expiry_date: e.target.value })} /></div>
           <Button onClick={add}>Add charge</Button>
         </div>
         {q.isLoading && <PageLoading />}
@@ -134,12 +168,12 @@ function PriceList({ currency }: { currency: string }) {
         {q.data && (
           <div className="overflow-x-auto">
             <Table>
-              <TableHeader><TableRow><TableHead>Charge</TableHead><TableHead>Category</TableHead><TableHead>Price</TableHead><TableHead>Active</TableHead></TableRow></TableHeader>
+              <TableHeader><TableRow><TableHead>Charge</TableHead><TableHead>Category</TableHead><TableHead>Price</TableHead><TableHead>Valid</TableHead><TableHead>Approval</TableHead><TableHead>Active</TableHead></TableRow></TableHeader>
               <TableBody>
-                {q.data.length === 0 && <TableRow><TableCell colSpan={4} className="py-6 text-center text-sm text-muted-foreground">No prices entered. Add the clinic's approved charges above.</TableCell></TableRow>}
+                {q.data.length === 0 && <TableRow><TableCell colSpan={6} className="py-6 text-center text-sm text-muted-foreground">No prices entered. Add the clinic's approved charges above.</TableCell></TableRow>}
                 {q.data.map((c) => (
                   <TableRow key={c.id} className={c.active ? "" : "text-muted-foreground"}>
-                    <TableCell>{c.name}</TableCell>
+                    <TableCell>{c.name}{c.description && <div className="text-xs text-muted-foreground">{c.description}</div>}</TableCell>
                     <TableCell>{CHARGE_CATEGORY_LABEL[c.category] ?? c.category}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
@@ -148,6 +182,8 @@ function PriceList({ currency }: { currency: string }) {
                         <span className="text-xs text-muted-foreground">{money(c.price, currency)}</span>
                       </div>
                     </TableCell>
+                    <TableCell className="text-xs">{c.effective_date ?? "—"} → {c.expiry_date ?? "open"}</TableCell>
+                    <TableCell className="text-xs">{c.approval_status === "approved" ? <span className="text-success">Approved</span> : <Button size="sm" variant="outline" className="h-7" onClick={() => approve(c.id)}>Approve</Button>}</TableCell>
                     <TableCell><Switch checked={c.active} aria-label={`${c.name} active`} onCheckedChange={(v) => update(c.id, { active: v })} /></TableCell>
                   </TableRow>
                 ))}
