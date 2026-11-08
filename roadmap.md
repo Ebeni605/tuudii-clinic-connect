@@ -17,13 +17,14 @@
 ## Staff registration & approval (done)
 - [ ] Needs a real inbox: register → confirm email → admin approves → log in
 
-## Pre-deployment requirements (in progress)
-- [ ] 1. Lab test definitions: units/ranges/method/analyzer/critical limits, age/sex/pregnancy ranges, approval workflow, B/F + BF locked until confirmed
-- [ ] 2. Price list: per-charge approval, effective/expiry dates, price history, price-list confirmation gate before billing can run
-- [ ] 3. Backup/restore record, synthetic-data cleanup tool (admin-approved), 10-gate deployment readiness checklist
-- [ ] Tests + typecheck + final report
+## Pre-deployment requirements (done)
+- [x] 1. Lab test definitions: units/ranges/method/analyzer/critical limits, age/sex/pregnancy ranges, approval workflow, B/F + BF locked until confirmed
+- [x] 2. Price list: per-charge approval, effective/expiry dates, price history, price-list confirmation gate before billing can run
+- [x] 3. Backup/restore record, synthetic-data cleanup tool (admin-approved), 10-gate deployment readiness checklist
+- [x] Tests + typecheck + final report
 
 ## Later / needs the clinic
+- Perform a real backup restore and fill in the record in docs/GO_LIVE.md
 - Clinic to enter validated units/reference intervals; confirm meaning of B/F and BF
 - Clinic to approve prices + payment workflow before billing is switched on
 - Remove test accounts and fictional records before real use

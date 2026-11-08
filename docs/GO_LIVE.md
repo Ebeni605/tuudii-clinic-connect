@@ -58,6 +58,14 @@ Recommended procedure for the clinic:
 Status: **backups and restoration have not been verified.** Do not claim the system is backed up
 until steps 1 and 4 have been done and recorded.
 
+### Backup/restore verification record (fill in — NOT yet verified)
+
+| Date | Backup source | Restored to (separate environment) | Checks performed (patient count, lab results, audit log) | Result | Performed by |
+|------|---------------|-----------------------------------|----------------------------------------------------------|--------|--------------|
+| — | — | — | — | Not performed | — |
+
+Only tick the "Backup restored and checked" gate on the admin Go-live checklist after a row above is completed with evidence.
+
 ## 5. Deployment and rollback
 
 Before every publish:
