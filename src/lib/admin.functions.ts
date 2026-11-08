@@ -206,7 +206,8 @@ export const cleanupSyntheticData = createServerFn({ method: "POST" })
 
     const del = async (table: string, column: string, ids: string[]) => {
       if (!ids.length) return;
-      const { error } = await supabaseAdmin.from(table).delete().in(column, ids);
+      // Table names are fixed in the calls below; the generated client types only accept literals
+      const { error } = await supabaseAdmin.from(table as "patients").delete().in(column, ids);
       if (error) throw new Error(`Cleanup failed at ${table}: ${error.message}`);
     };
 
