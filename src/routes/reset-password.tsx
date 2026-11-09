@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/PasswordInput";
 import { Label } from "@/components/ui/label";
 import { ClinicLogo } from "@/components/ClinicBrand";
 import { supabase } from "@/integrations/supabase/client";
@@ -77,8 +78,8 @@ function ResetPassword() {
           {ready === "ok" && (
             <form onSubmit={submit} className="space-y-4">
               <p className="text-sm text-muted-foreground">{email}</p>
-              <div className="space-y-1.5"><Label htmlFor="np">New password</Label><Input id="np" type="password" autoComplete="new-password" value={pw} onChange={(e) => setPw(e.target.value)} required /><p className="text-xs text-muted-foreground">{PASSWORD_HINT}</p></div>
-              <div className="space-y-1.5"><Label htmlFor="np2">Repeat new password</Label><Input id="np2" type="password" autoComplete="new-password" value={pw2} onChange={(e) => setPw2(e.target.value)} required /></div>
+              <div className="space-y-1.5"><Label htmlFor="np">New password</Label><PasswordInput id="np" autoComplete="new-password" value={pw} onChange={(e) => setPw(e.target.value)} required /><p className="text-xs text-muted-foreground">{PASSWORD_HINT}</p></div>
+              <div className="space-y-1.5"><Label htmlFor="np2">Repeat new password</Label><PasswordInput id="np2" autoComplete="new-password" value={pw2} onChange={(e) => setPw2(e.target.value)} required /></div>
               <Button type="submit" className="w-full" disabled={busy}>{busy ? "Saving…" : "Save new password"}</Button>
             </form>
           )}

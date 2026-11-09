@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/PasswordInput";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/AppShell";
@@ -83,9 +84,9 @@ function Profile() {
         <CardHeader><CardTitle className="text-base">Change password</CardTitle></CardHeader>
         <CardContent>
           <form onSubmit={changePassword} className="grid gap-4 sm:grid-cols-3">
-            <div className="space-y-1.5"><Label htmlFor="cp">Current password</Label><Input id="cp" type="password" autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} required /></div>
-            <div className="space-y-1.5"><Label htmlFor="np">New password</Label><Input id="np" type="password" autoComplete="new-password" value={pw} onChange={(e) => setPw(e.target.value)} required /><p className="text-xs text-muted-foreground">{PASSWORD_HINT}</p></div>
-            <div className="space-y-1.5"><Label htmlFor="np2">Repeat new password</Label><Input id="np2" type="password" autoComplete="new-password" value={pw2} onChange={(e) => setPw2(e.target.value)} required /></div>
+            <div className="space-y-1.5"><Label htmlFor="cp">Current password</Label><PasswordInput id="cp" autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} required /></div>
+            <div className="space-y-1.5"><Label htmlFor="np">New password</Label><PasswordInput id="np" autoComplete="new-password" value={pw} onChange={(e) => setPw(e.target.value)} required /><p className="text-xs text-muted-foreground">{PASSWORD_HINT}</p></div>
+            <div className="space-y-1.5"><Label htmlFor="np2">Repeat new password</Label><PasswordInput id="np2" autoComplete="new-password" value={pw2} onChange={(e) => setPw2(e.target.value)} required /></div>
             <div><Button type="submit" disabled={busy === "pw"}>{busy === "pw" ? "Changing…" : "Change password"}</Button></div>
           </form>
         </CardContent>
