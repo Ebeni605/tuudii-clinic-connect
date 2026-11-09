@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/PasswordInput";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ClinicLogo } from "@/components/ClinicBrand";
@@ -73,7 +74,7 @@ function Register() {
               {FIELDS.map((x) => (
                 <div key={x.k} className="space-y-1">
                   <Label htmlFor={x.k}>{x.label}</Label>
-                  <Input id={x.k} type={x.type ?? "text"} autoComplete={x.ac} value={f[x.k]} onChange={(e) => setF({ ...f, [x.k]: e.target.value })} aria-invalid={!!errs[x.k]} />
+                  {x.type === "password" ? <PasswordInput id={x.k} autoComplete={x.ac} value={f[x.k]} onChange={(e) => setF({ ...f, [x.k]: e.target.value })} aria-invalid={!!errs[x.k]} /> : <Input id={x.k} type={x.type ?? "text"} autoComplete={x.ac} value={f[x.k]} onChange={(e) => setF({ ...f, [x.k]: e.target.value })} aria-invalid={!!errs[x.k]} />}
                   {x.k === "password" && <p className="text-xs text-muted-foreground">{PASSWORD_HINT}</p>}
                   {errs[x.k] && <p className="text-xs text-destructive">{errs[x.k]}</p>}
                 </div>

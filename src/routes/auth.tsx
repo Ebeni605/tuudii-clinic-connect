@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/PasswordInput";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ClinicLogo, CLINIC } from "@/components/ClinicBrand";
@@ -149,7 +150,7 @@ function AuthPage() {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="pw">Password</Label>
-              <Input id="pw" type="password" autoComplete={needsSetup ? "new-password" : "current-password"} minLength={needsSetup ? 10 : undefined} value={password} onChange={(e) => setPassword(e.target.value)} required />
+              <PasswordInput id="pw" autoComplete={needsSetup ? "new-password" : "current-password"} minLength={needsSetup ? 10 : undefined} value={password} onChange={(e) => setPassword(e.target.value)} required />
             </div>
             <Button type="submit" className="w-full" disabled={busy}>
               {busy ? "Please wait…" : needsSetup ? "Create administrator" : "Sign in"}
