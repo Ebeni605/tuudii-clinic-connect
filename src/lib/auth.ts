@@ -59,9 +59,9 @@ export function useStaff() {
 
 /** Route guard: send staff without the right role to the no-access page before the page loads. */
 export function requireArea(area: Area) {
-  return async ({ context }: { context: { queryClient: QueryClient } }) => {
+  return async ({ context, location }: { context: { queryClient: QueryClient }; location: { href: string } }) => {
     const me = await context.queryClient.ensureQueryData(staffQuery);
-    if (!me) throw redirect({ to: "/auth" });
+    if (!me) throw redirect({ to: "/auth", search: { redirect: location.href } });
     if (!canAccess(me.roles, area)) throw redirect({ to: "/no-access" });
   };
 }
