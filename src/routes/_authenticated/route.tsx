@@ -4,9 +4,9 @@ import { AppShell, LoadError, PageLoading } from "@/components/AppShell";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
-  beforeLoad: async () => {
+  beforeLoad: async ({ location }) => {
     const { data } = await supabase.auth.getUser();
-    if (!data.user) throw redirect({ to: "/auth" });
+    if (!data.user) throw redirect({ to: "/auth", search: { redirect: location.href } });
   },
   pendingComponent: () => <div className="p-6"><PageLoading /></div>,
   errorComponent: AuthedError,

@@ -21,6 +21,7 @@ import { Route as AuthenticatedAdminAuditRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminBillingRouteImport } from './routes/_authenticated/admin.billing'
 import { Route as AuthenticatedAdminDeploymentRouteImport } from './routes/_authenticated/admin.deployment'
 import { Route as AuthenticatedAdminDiagnosesRouteImport } from './routes/_authenticated/admin.diagnoses'
+import { Route as AuthenticatedAdminGoLiveRouteImport } from './routes/_authenticated/admin.go-live'
 import { Route as AuthenticatedAdminReportsRouteImport } from './routes/_authenticated/admin.reports'
 import { Route as AuthenticatedAdminServicesRouteImport } from './routes/_authenticated/admin.services'
 import { Route as AuthenticatedAdminStaffRouteImport } from './routes/_authenticated/admin.staff'
@@ -101,6 +102,12 @@ const AuthenticatedAdminDiagnosesRoute =
   AuthenticatedAdminDiagnosesRouteImport.update({
     id: '/admin/diagnoses',
     path: '/admin/diagnoses',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminGoLiveRoute =
+  AuthenticatedAdminGoLiveRouteImport.update({
+    id: '/admin/go-live',
+    path: '/admin/go-live',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAdminReportsRoute =
@@ -225,6 +232,7 @@ export interface FileRoutesByFullPath {
   '/admin/billing': typeof AuthenticatedAdminBillingRoute
   '/admin/deployment': typeof AuthenticatedAdminDeploymentRoute
   '/admin/diagnoses': typeof AuthenticatedAdminDiagnosesRoute
+  '/admin/go-live': typeof AuthenticatedAdminGoLiveRoute
   '/admin/reports': typeof AuthenticatedAdminReportsRoute
   '/admin/services': typeof AuthenticatedAdminServicesRoute
   '/admin/staff': typeof AuthenticatedAdminStaffRoute
@@ -257,6 +265,7 @@ export interface FileRoutesByTo {
   '/admin/billing': typeof AuthenticatedAdminBillingRoute
   '/admin/deployment': typeof AuthenticatedAdminDeploymentRoute
   '/admin/diagnoses': typeof AuthenticatedAdminDiagnosesRoute
+  '/admin/go-live': typeof AuthenticatedAdminGoLiveRoute
   '/admin/reports': typeof AuthenticatedAdminReportsRoute
   '/admin/services': typeof AuthenticatedAdminServicesRoute
   '/admin/staff': typeof AuthenticatedAdminStaffRoute
@@ -291,6 +300,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/billing': typeof AuthenticatedAdminBillingRoute
   '/_authenticated/admin/deployment': typeof AuthenticatedAdminDeploymentRoute
   '/_authenticated/admin/diagnoses': typeof AuthenticatedAdminDiagnosesRoute
+  '/_authenticated/admin/go-live': typeof AuthenticatedAdminGoLiveRoute
   '/_authenticated/admin/reports': typeof AuthenticatedAdminReportsRoute
   '/_authenticated/admin/services': typeof AuthenticatedAdminServicesRoute
   '/_authenticated/admin/staff': typeof AuthenticatedAdminStaffRoute
@@ -325,6 +335,7 @@ export interface FileRouteTypes {
     | '/admin/billing'
     | '/admin/deployment'
     | '/admin/diagnoses'
+    | '/admin/go-live'
     | '/admin/reports'
     | '/admin/services'
     | '/admin/staff'
@@ -357,6 +368,7 @@ export interface FileRouteTypes {
     | '/admin/billing'
     | '/admin/deployment'
     | '/admin/diagnoses'
+    | '/admin/go-live'
     | '/admin/reports'
     | '/admin/services'
     | '/admin/staff'
@@ -390,6 +402,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/billing'
     | '/_authenticated/admin/deployment'
     | '/_authenticated/admin/diagnoses'
+    | '/_authenticated/admin/go-live'
     | '/_authenticated/admin/reports'
     | '/_authenticated/admin/services'
     | '/_authenticated/admin/staff'
@@ -503,6 +516,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/diagnoses'
       fullPath: '/admin/diagnoses'
       preLoaderRoute: typeof AuthenticatedAdminDiagnosesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/go-live': {
+      id: '/_authenticated/admin/go-live'
+      path: '/admin/go-live'
+      fullPath: '/admin/go-live'
+      preLoaderRoute: typeof AuthenticatedAdminGoLiveRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin/reports': {
@@ -649,6 +669,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminBillingRoute: typeof AuthenticatedAdminBillingRoute
   AuthenticatedAdminDeploymentRoute: typeof AuthenticatedAdminDeploymentRoute
   AuthenticatedAdminDiagnosesRoute: typeof AuthenticatedAdminDiagnosesRoute
+  AuthenticatedAdminGoLiveRoute: typeof AuthenticatedAdminGoLiveRoute
   AuthenticatedAdminReportsRoute: typeof AuthenticatedAdminReportsRoute
   AuthenticatedAdminServicesRoute: typeof AuthenticatedAdminServicesRoute
   AuthenticatedAdminStaffRoute: typeof AuthenticatedAdminStaffRoute
@@ -678,6 +699,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminBillingRoute: AuthenticatedAdminBillingRoute,
   AuthenticatedAdminDeploymentRoute: AuthenticatedAdminDeploymentRoute,
   AuthenticatedAdminDiagnosesRoute: AuthenticatedAdminDiagnosesRoute,
+  AuthenticatedAdminGoLiveRoute: AuthenticatedAdminGoLiveRoute,
   AuthenticatedAdminReportsRoute: AuthenticatedAdminReportsRoute,
   AuthenticatedAdminServicesRoute: AuthenticatedAdminServicesRoute,
   AuthenticatedAdminStaffRoute: AuthenticatedAdminStaffRoute,
