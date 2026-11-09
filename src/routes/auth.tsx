@@ -15,7 +15,7 @@ import { bootstrapAdmin } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (search: Record<string, unknown>): { redirect?: string } => {
-    const r = search.redirect;
+    const r = search["redirect"];
     // Only internal paths are honored — never redirect the browser to another site after sign-in
     return typeof r === "string" && r.startsWith("/") && !r.startsWith("//") ? { redirect: r } : {};
   },
