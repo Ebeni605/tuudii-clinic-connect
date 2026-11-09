@@ -14,6 +14,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { bootstrapAdmin } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/auth")({
+  validateSearch: (search: Record<string, unknown>): { redirect?: string } => {
+    const r = search.redirect;
+    // Only internal paths are honored — never redirect the browser to another site after sign-in
+    return typeof r === "string" && r.startsWith("/") && !r.startsWith("//") ? { redirect: r } : {};
+  },
   head: () => ({
     meta: [
       { title: "Staff Sign In — Two D Medium Clinic" },
@@ -30,9 +35,12 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { redirect: redirectTo } = Route.useSearch();
   const goHome = async () => {
     const me = await qc.fetchQuery(staffQuery);
-    navigate({ to: me && me.state === "ok" ? homeFor(me.roles) : "/no-access", replace: true });
+    const fallback = me && me.state === "ok" ? homeFor(me.roles) : "/no-access";
+    // Return the user to the page they originally asked for (e.g. a shared /admin/deployment link)
+    navigate({ to: redirectTo ?? fallback, replace: true });
   };
   const [needsSetup, setNeedsSetup] = useState(false);
   const [email, setEmail] = useState("");
