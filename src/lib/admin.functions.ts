@@ -72,8 +72,14 @@ export const createStaff = createServerFn({ method: "POST" })
     const uid = created.user.id;
     // Profile row may already exist from the sign-up trigger; write it as the admin so the audit log names them
     await supabaseAdmin.from("profiles").upsert({ id: uid, full_name: data.fullName, phone: data.phone || null });
-    const { error: re } = await context.supabase.from("user_roles").insert([...new Set(data.roles)].map((r) => ({ user_id: uid, role: r })));
-    if (re) throw new Error(re.message);
+    // Admin-created accounts are approved immediately with their first role (same RPC as registration approval)
+    const [first, ...rest] = [...new Set(data.roles)];
+    const { error: ae } = await context.supabase.rpc("approve_staff_registration", { _user_id: uid, _role: first });
+    if (ae) throw new Error(ae.message);
+    if (rest.length) {
+      const { error: re } = await context.supabase.from("user_roles").insert(rest.map((r) => ({ user_id: uid, role: r })));
+      if (re) throw new Error(re.message);
+    }
     await auditAccountEvent(context.userId, uid, "STAFF_CREATED", { email: data.email, roles: data.roles });
     return { ok: true };
   });
