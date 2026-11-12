@@ -85,6 +85,13 @@
       "when": 1794040907004,
       "tag": "0011_predeployment_lab_price_readiness",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1794470000000,
+      "tag": "0012_admin_dashboard_analytics",
+      "breakpoints": true
     }
   ]
 }
