@@ -58,7 +58,7 @@ BEGIN
       'review', jsonb_build_object('total', (SELECT count(*) FROM v WHERE status IN ('ready_for_review','completed') AND EXISTS (SELECT 1 FROM lab_requests r WHERE r.visit_id = v.id)),
                                    'waiting', (SELECT count(*) FROM v WHERE status = 'ready_for_review')),
       'payment', jsonb_build_object('enabled', public.billing_enabled(),
-                                    'total', CASE WHEN public.billing_enabled() THEN (SELECT count(DISTINCT i.visit_id) FROM invoices i JOIN v ON v.id = i.visit_id WHERE i.status = 'paid') ELSE NULL END),
+                                    'total', CASE WHEN public.billing_enabled() THEN (SELECT count(DISTINCT i.visit_id) FROM invoices i JOIN v ON v.id = i.visit_id WHERE i.status = 'issued' AND public.invoice_balance(i.id) <= 0) ELSE NULL END),
       'completed', jsonb_build_object('total', (SELECT count(*) FROM v WHERE status = 'completed'))
     )
   ) INTO res;
