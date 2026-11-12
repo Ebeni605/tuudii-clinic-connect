@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { clinicDayRange, today, useLiveTable, useServices } from "@/lib/data";
 import { requireArea, useStaff } from "@/lib/auth";
 import { canAccess } from "@/lib/workflow";
+import { AdminAnalytics } from "@/components/admin/AdminAnalytics";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   beforeLoad: requireArea("dashboard"),
@@ -87,7 +88,7 @@ function Dashboard() {
           );
         })}
       </div>
-      {isAdmin && <ManagementSummary />}
+      {isAdmin && <AdminAnalytics />}
       {!isAdmin && error && <div className="mb-4"><LoadError onRetry={() => refetch()} /></div>}
       {!isAdmin && <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         {stats.map((s) => (
