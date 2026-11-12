@@ -69,3 +69,16 @@ export function pct(part: number, whole: number) {
 export function searchDate(v: unknown): string | undefined {
   return typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : undefined;
 }
+
+/** Change vs the previous equal-length period, or null when there is no valid basis (never invent a %). */
+export function periodChange(current: number, previous: number | null | undefined): { pct: number; dir: "up" | "down" | "same" } | null {
+  if (previous === null || previous === undefined || !Number.isFinite(previous) || previous <= 0) return null;
+  const p = Math.round(((current - previous) / previous) * 100);
+  return { pct: Math.abs(p), dir: p > 0 ? "up" : p < 0 ? "down" : "same" };
+}
+
+/** The flow step with the most visits waiting/in progress — the current bottleneck — or null when nothing is queued. */
+export function bottleneck(steps: { key: string; queued: number }[]): string | null {
+  const top = steps.reduce<{ key: string; queued: number } | null>((b, s) => (s.queued > (b?.queued ?? 0) ? s : b), null);
+  return top?.key ?? null;
+}
