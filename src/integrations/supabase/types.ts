@@ -1885,6 +1885,10 @@ export type Database = {
         Returns: Json
       }
       report_billing: { Args: { _from: string; _to: string }; Returns: Json }
+      report_dashboard: {
+        Args: { _from: string; _group?: string; _to: string }
+        Returns: Json
+      }
       report_guard: { Args: { _from: string; _to: string }; Returns: undefined }
       report_lab_turnaround: {
         Args: { _from: string; _limit?: number; _offset?: number; _to: string }
