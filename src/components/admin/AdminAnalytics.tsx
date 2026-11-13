@@ -344,7 +344,7 @@ function FlowCard({ d }: { d: Dash }) {
     { key: "completed", label: "Completed", total: n(f.completed.total), queued: 0, qLabel: "" },
   ];
   const base = Math.max(1, steps[0]!.total);
-  const neck = bottleneck(steps);
+  const neck = bottleneck(steps.map((s) => ({ key: s.key, queued: s.queued })));
   return (
     <Card className="shadow-sm lg:col-span-2">
       <Head title="Patient flow" />
