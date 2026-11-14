@@ -343,7 +343,7 @@ function FlowCard({ d }: { d: Dash }) {
     { key: "payment", label: "Reception payment", total: f.payment.enabled ? n(f.payment.total) : null, queued: 0, qLabel: "" },
     { key: "completed", label: "Completed", total: n(f.completed.total), queued: 0, qLabel: "" },
   ];
-  const base = Math.max(1, steps[0]!.total);
+  const base = Math.max(1, steps[0]?.total ?? 0);
   const neck = bottleneck(steps.map((s) => ({ key: s.key, queued: s.queued })));
   return (
     <Card className="shadow-sm lg:col-span-2">
